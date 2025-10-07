@@ -817,7 +817,7 @@ def get_wandb_runs(project_path):
         return []
 
 def main():
-    
+    st.write(os.environ)
     st.title("📊 WandB Runs Enhanced analysis")
     # st.markdown("Visualize and compare metrics across multiple WandB runs")
     st.markdown(
@@ -825,6 +825,7 @@ def main():
         **In progress:**
         1. Problematic data point detection
         2. Good params for anomaly detection
+        
         **ToDo:**
         3. Run hyperparameter comparison
         4. Run result AI summary
