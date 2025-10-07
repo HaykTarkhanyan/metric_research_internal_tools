@@ -15,6 +15,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv()
 
+print(os.environ.keys())
+
 def get_colors(num_runs):
     """Get colors for plots - Armenian flag colors if 3+ runs, otherwise default"""
     if num_runs >= 3:
@@ -816,9 +818,9 @@ def get_wandb_runs(project_path):
         return []
 
 def main():
-    st.title("📊 WandB Runs Visualizer")
-    st.markdown("Visualize and compare metrics across multiple WandB runs")
-    
+    st.title("📊 WandB Runs Enhanced analysis")
+    # st.markdown("Visualize and compare metrics across multiple WandB runs")
+    st.markdown("In progress:\")
     # Sidebar for WandB authentication
     st.sidebar.header("🔐 WandB Authentication")
     
