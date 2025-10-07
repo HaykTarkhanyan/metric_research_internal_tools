@@ -875,7 +875,7 @@ def main():
                 st.sidebar.error("❌ Please enter an API key")
     else:
         st.sidebar.success("✅ WandB Authenticated")
-        st.balloons()
+        # st.balloons()
         if st.sidebar.button("🚪 Logout"):
             st.session_state.wandb_authenticated = False
             if 'WANDB_API_KEY' in os.environ:
