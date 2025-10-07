@@ -820,7 +820,17 @@ def get_wandb_runs(project_path):
 def main():
     st.title("📊 WandB Runs Enhanced analysis")
     # st.markdown("Visualize and compare metrics across multiple WandB runs")
-    st.markdown("In progress:\")
+    st.markdown(
+        """
+        **In progress:**
+        1. Problematic data point detection
+        2. Good params for anomaly detection
+        **ToDo:**
+        3. Run hyperparameter comparison
+        4. Run result AI summary
+        5. Manr-Munr
+        """
+    )
     # Sidebar for WandB authentication
     st.sidebar.header("🔐 WandB Authentication")
     
