@@ -1,13 +1,19 @@
-import streamlit as st
+import wandb
+
+import numpy as np
 import pandas as pd
+import streamlit as st
+
 import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
-import ast
-import numpy as np
+
 import os
+import ast
+
 from pathlib import Path
-import wandb
+from dotenv import load_dotenv
+load_dotenv()
 
 def get_colors(num_runs):
     """Get colors for plots - Armenian flag colors if 3+ runs, otherwise default"""
@@ -760,6 +766,55 @@ def authenticate_wandb(api_key):
         st.error(f"Failed to authenticate with WandB: {e}")
         return False
 
+@st.cache_data
+def get_wandb_projects():
+    """Fetch available WandB projects for the authenticated user"""
+    try:
+        api = wandb.Api()
+        projects = []
+        
+        # Get projects from the authenticated user
+        user = api.viewer
+        if user:
+            entity = user.username
+            for project in api.projects(entity=entity):
+                projects.append(f"{entity}/{project.name}")
+        
+        return projects
+    except Exception as e:
+        st.error(f"Error fetching WandB projects: {e}")
+        return []
+
+@st.cache_data
+def get_wandb_runs(project_path):
+    """Fetch runs from a specific WandB project"""
+    try:
+        api = wandb.Api()
+        runs = api.runs(project_path)
+        
+        runs_data = []
+        for run in runs:
+            run_data = {
+                'id': run.id,
+                'name': run.name,
+                'state': run.state,
+                'config': run.config,
+                'summary': run.summary._json_dict,
+                'history': []
+            }
+            
+            # Get history data
+            history = run.history()
+            if not history.empty:
+                run_data['history'] = history.to_dict('records')
+            
+            runs_data.append(run_data)
+        
+        return runs_data
+    except Exception as e:
+        st.error(f"Error fetching runs from project {project_path}: {e}")
+        return []
+
 def main():
     st.title("📊 WandB Runs Visualizer")
     st.markdown("Visualize and compare metrics across multiple WandB runs")
@@ -827,8 +882,77 @@ def main():
         """)
         return
     
-    # Load data
-    df = load_data()
+    # Project selection section
+    st.sidebar.header("🎯 Project Selection")
+    
+    # Data source selection
+    data_source = st.sidebar.radio(
+        "Choose data source:",
+        ["📁 Load from CSV file (only for internal use)", "🌐 Fetch from WandB project"],
+        help="Choose whether to load data from a local CSV file or fetch directly from WandB"
+    )
+    
+    df = None
+    
+    if data_source == "📁 Load from CSV file":
+        # Load data from CSV (existing functionality)
+        df = load_data()
+        if df is None:
+            return
+    else:
+        # Fetch data from WandB project
+        st.sidebar.markdown("Select a WandB project to fetch runs:")
+        
+        # Get available projects
+        with st.spinner("Fetching your WandB projects..."):
+            projects = get_wandb_projects()
+        
+        if not projects:
+            st.sidebar.error("❌ No projects found or error fetching projects")
+            st.info("🔍 No WandB projects found. Make sure you have projects in your WandB account.")
+            return
+        
+        # Project selection
+        selected_project = st.sidebar.selectbox(
+            "Choose a project.",
+            projects,
+            help="Select the WandB project to load runs from"
+        )
+        st.sidebar.warning("💡 Don't forget to click 'Fetch Runs' every time you pick a project")
+        if st.sidebar.button("🔄 Fetch Runs"):
+            with st.spinner(f"Fetching runs from {selected_project}..."):
+                runs_data = get_wandb_runs(selected_project)
+            
+            if runs_data:
+                # Convert runs data to DataFrame format similar to CSV
+                df_data = []
+                for run in runs_data:
+                    df_data.append({
+                        'name': run['name'],
+                        'state': run['state'],
+                        'config': str(run['config']),
+                        'summary': str(run['summary']),
+                        'history': str(run['history'])
+                    })
+                
+                df = pd.DataFrame(df_data)
+                st.sidebar.success(f"✅ Loaded {len(df)} runs from {selected_project}")
+                
+                # Store in session state to persist across reruns
+                st.session_state.wandb_data = df
+                st.session_state.selected_project = selected_project
+            else:
+                st.sidebar.error("❌ No runs found in the selected project")
+                return
+        
+        # Use cached data if available
+        if 'wandb_data' in st.session_state:
+            df = st.session_state.wandb_data
+            st.sidebar.info(f"📊 Using cached data from: {st.session_state.get('selected_project', 'Unknown')}")
+        else:
+            st.info("🎯 Please select a project and click 'Fetch Runs' to load data from WandB.")
+            return
+    
     if df is None:
         return
     

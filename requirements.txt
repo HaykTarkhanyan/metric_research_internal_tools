@@ -4,3 +4,4 @@ plotly==5.5.0
 numpy==1.24.4
 scipy==1.24.4
 wandb==0.22.2
+python-dotenv==1.0.1
