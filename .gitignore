@@ -1,3 +1,6 @@
+wandb_runs_data.csv
+wandb/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
