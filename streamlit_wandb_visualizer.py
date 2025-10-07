@@ -5,6 +5,9 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import ast
 import numpy as np
+import os
+from pathlib import Path
+import wandb
 
 def get_colors(num_runs):
     """Get colors for plots - Armenian flag colors if 3+ runs, otherwise default"""
@@ -721,9 +724,110 @@ def show_anomaly_detection_view(df, selected_runs, selected_metric, plot_type, v
             st.write("*Data is smoothed using moving average before detection*")
         st.write("💡 *Only individual plots are shown for better local context*")
 
+def load_api_key_from_env():
+    """Load WandB API key from .env file"""
+    try:
+        # Look for .env file in current directory and parent directories
+        current_dir = Path.cwd()
+        env_paths = [
+            current_dir / ".env",
+            current_dir.parent / ".env",
+            current_dir.parent.parent / ".env"
+        ]
+        
+        for env_path in env_paths:
+            if env_path.exists():
+                with open(env_path, 'r') as f:
+                    for line in f:
+                        if line.strip().startswith('WANDB_API_KEY='):
+                            return line.strip().split('=', 1)[1]
+        return None
+    except Exception as e:
+        st.error(f"Error loading API key from .env: {e}")
+        return None
+
+def authenticate_wandb(api_key):
+    """Authenticate with WandB using the provided API key"""
+    try:
+        if wandb is None:
+            st.error("WandB is not installed. Please install it with: pip install wandb")
+            return False
+        
+        os.environ['WANDB_API_KEY'] = api_key
+        wandb.login(key=api_key)
+        return True
+    except Exception as e:
+        st.error(f"Failed to authenticate with WandB: {e}")
+        return False
+
 def main():
+    st.set_page_config(page_title="W&B Runs Visualizer", layout="wide")
+    
     st.title("📊 WandB Runs Visualizer")
     st.markdown("Visualize and compare metrics across multiple WandB runs")
+    
+    # Sidebar for WandB authentication
+    st.sidebar.header("🔐 WandB Authentication")
+    
+    # Check if already authenticated
+    if 'wandb_authenticated' not in st.session_state:
+        st.session_state.wandb_authenticated = False
+    
+    if not st.session_state.wandb_authenticated:
+        st.sidebar.markdown("Enter your WandB API key to access your runs:")
+        api_key_input = st.sidebar.text_input(
+            "API Key", 
+            type="password", 
+            placeholder="Enter API key or 'panir' to load from .env",
+            help="Enter 'panir' to automatically load the API key from .env file"
+        )
+        
+        if st.sidebar.button("🚀 Login to WandB"):
+            if api_key_input:
+                if api_key_input.lower() == "panir":
+                    # Load from .env
+                    env_api_key = load_api_key_from_env()
+                    if env_api_key:
+                        if authenticate_wandb(env_api_key):
+                            st.session_state.wandb_authenticated = True
+                            st.sidebar.success("✅ Successfully authenticated with WandB using .env key!")
+                            st.rerun()
+                        else:
+                            st.sidebar.error("❌ Failed to authenticate with WandB")
+                    else:
+                        st.sidebar.error("❌ Could not find WANDB_API_KEY in .env file")
+                else:
+                    # Use provided API key
+                    if authenticate_wandb(api_key_input):
+                        st.session_state.wandb_authenticated = True
+                        st.sidebar.success("✅ Successfully authenticated with WandB!")
+                        st.rerun()
+                    else:
+                        st.sidebar.error("❌ Failed to authenticate with WandB")
+            else:
+                st.sidebar.error("❌ Please enter an API key")
+    else:
+        st.sidebar.success("✅ WandB Authenticated")
+        if st.sidebar.button("🚪 Logout"):
+            st.session_state.wandb_authenticated = False
+            if 'WANDB_API_KEY' in os.environ:
+                del os.environ['WANDB_API_KEY']
+            st.rerun()
+    
+    st.sidebar.markdown("---")
+    
+    # Only show the rest of the interface if authenticated
+    if not st.session_state.wandb_authenticated:
+        st.info("🔐 Please authenticate with WandB using the sidebar to access your runs.")
+        st.markdown("""
+        ### How to get your WandB API key:
+        1. Go to [WandB Settings](https://wandb.ai/authorize)
+        2. Copy your API key
+        3. Paste it in the sidebar and click "Login to WandB"
+        
+        **Special shortcut:** Type `panir` to automatically load the API key from your .env file.
+        """)
+        return
     
     # Load data
     df = load_data()
