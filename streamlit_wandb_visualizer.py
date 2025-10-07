@@ -831,7 +831,6 @@ def main():
         5. Manr-Munr
         """
     )
-    st.write(os.environ.keys())
     
     # Sidebar for WandB authentication
     st.sidebar.header("🔐 WandB Authentication")
