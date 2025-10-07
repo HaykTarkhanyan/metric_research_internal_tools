@@ -817,7 +817,7 @@ def get_wandb_runs(project_path):
         return []
 
 def main():
-    st.write(os.environ)
+    # st.write(os.environ)
     st.title("📊 WandB Runs Enhanced analysis")
     # st.markdown("Visualize and compare metrics across multiple WandB runs")
     st.markdown(
