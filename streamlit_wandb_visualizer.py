@@ -776,13 +776,13 @@ def main():
         api_key_input = st.sidebar.text_input(
             "API Key", 
             type="password", 
-            placeholder="Enter API key or 'panir' to load from .env",
-            help="Enter 'panir' to automatically load the API key from .env file"
+            placeholder="Enter API key or magic word to load from .env",
+            help="Enter 'magic word' to automatically load the API key from .env file"
         )
         
         if st.sidebar.button("🚀 Login to WandB"):
             if api_key_input:
-                if api_key_input.lower() == "panir":
+                if api_key_input.lower() == os.environ["MAGIC_WORD"].lower():
                     # Load from .env
                     env_api_key = load_api_key_from_env()
                     if env_api_key:
@@ -823,7 +823,7 @@ def main():
         2. Copy your API key
         3. Paste it in the sidebar and click "Login to WandB"
         
-        **Special shortcut:** Type `panir` to automatically load the API key from your .env file.
+        **Special shortcut:** Type the magic word Hayk sent you to automatically load the API key from your .env file.
         """)
         return
     
