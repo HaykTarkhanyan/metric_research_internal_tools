@@ -761,8 +761,6 @@ def authenticate_wandb(api_key):
         return False
 
 def main():
-    st.set_page_config(page_title="W&B Runs Visualizer", layout="wide")
-    
     st.title("📊 WandB Runs Visualizer")
     st.markdown("Visualize and compare metrics across multiple WandB runs")
     
