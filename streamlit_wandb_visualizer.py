@@ -730,27 +730,27 @@ def show_anomaly_detection_view(df, selected_runs, selected_metric, plot_type, v
             st.write("*Data is smoothed using moving average before detection*")
         st.write("💡 *Only individual plots are shown for better local context*")
 
-def load_api_key_from_env():
-    """Load WandB API key from .env file"""
-    try:
-        # Look for .env file in current directory and parent directories
-        current_dir = Path.cwd()
-        env_paths = [
-            current_dir / ".env",
-            current_dir.parent / ".env",
-            current_dir.parent.parent / ".env"
-        ]
+# def load_api_key_from_env():
+#     """Load WandB API key from .env file"""
+#     try:
+#         # Look for .env file in current directory and parent directories
+#         current_dir = Path.cwd()
+#         env_paths = [
+#             current_dir / ".env",
+#             current_dir.parent / ".env",
+#             current_dir.parent.parent / ".env"
+#         ]
         
-        for env_path in env_paths:
-            if env_path.exists():
-                with open(env_path, 'r') as f:
-                    for line in f:
-                        if line.strip().startswith('WANDB_API_KEY='):
-                            return line.strip().split('=', 1)[1]
-        return None
-    except Exception as e:
-        st.error(f"Error loading API key from .env: {e}")
-        return None
+#         for env_path in env_paths:
+#             if env_path.exists():
+#                 with open(env_path, 'r') as f:
+#                     for line in f:
+#                         if line.strip().startswith('WANDB_API_KEY='):
+#                             return line.strip().split('=', 1)[1]
+#         return None
+#     except Exception as e:
+#         st.error(f"Error loading API key from .env: {e}")
+#         return None
 
 def authenticate_wandb(api_key):
     """Authenticate with WandB using the provided API key"""
@@ -839,7 +839,7 @@ def main():
             if api_key_input:
                 if api_key_input.lower() == os.environ["MAGIC_WORD"].lower():
                     # Load from .env
-                    env_api_key = load_api_key_from_env()
+                    env_api_key = os.environ["WANDB_API_KEY"]
                     if env_api_key:
                         if authenticate_wandb(env_api_key):
                             st.session_state.wandb_authenticated = True
@@ -848,7 +848,7 @@ def main():
                         else:
                             st.sidebar.error("❌ Failed to authenticate with WandB")
                     else:
-                        st.sidebar.error("❌ Could not find WANDB_API_KEY in .env file")
+                        st.sidebar.error("❌ Could not find WANDB_API_KEY in venv")
                 else:
                     # Use provided API key
                     if authenticate_wandb(api_key_input):
